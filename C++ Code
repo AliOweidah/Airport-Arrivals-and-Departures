@@ -1,0 +1,181 @@
+#include <iostream>
+#include <iomanip>
+
+using namespace std;
+
+enum time_zone {ACT, CET, CST, EST, GMT, MSK, PST, UTC}; //task 1
+
+enum flight_statue {arrival,departure}; // task 2
+
+class Localtime // task 3
+{
+    private :
+        int minutes;
+        time_zone current_zone;
+    public :
+        Localtime(){minutes = -1 ; current_zone =CET;}
+        Localtime(int minute,int hours,time_zone current_timezone){current_zone=current_timezone; minutes=minute + (hours*60);}
+        void set_time(int minute,int hour)
+            {
+                if(hour > 24 || minute > 60)
+                {
+                cout << "Error minutes or hours are given incorrectly "<<endl;
+                }
+            else
+                {
+                hour = hour*60;
+                minutes = minute + hour;
+                }
+            }
+        int get_hour(){return minutes/60;}
+        int get_minutes(){return minutes%60;}
+};
+
+ostream& operator<< (ostream& out,Localtime& A) // task 4
+{
+   out<<setw(2)<< A.get_hour() <<":"<<A.get_minutes();
+
+};
+
+class flight //task 5
+{
+private :
+    flight_statue arrivalordeparture;
+    string code,destination,gate,check_in,comment;
+    Localtime expected_time;
+public :
+    flight(flight_statue AOR,string cof,string dest,string gates,string checkin){comment="";arrivalordeparture=AOR;code=cof;destination=dest;gate=gates;check_in=checkin;}
+    string get_code(){return code;}
+    string get_destination(){return destination;}
+    string get_gate(){return gate;}
+    string get_check_in(){return check_in;}
+    string get_comment(){return comment;}
+    string get_scheduled(){return "schuduled";} // no use
+    void set_expected(Localtime exc){expected_time.set_time(exc.get_minutes(),exc.get_hour());}
+    void set_comment(string c){comment=c;}
+    bool is_Arrival(){if (arrivalordeparture){return false;} else {return true;}}
+    bool is_departure(){if (arrivalordeparture){return true;}else{return false;}}
+    bool is_expectvalid(){if (expected_time.get_minutes()==-1 && expected_time.get_hour()==0){return false;}else{return true;}}
+    void print(Localtime a)
+    {
+        cout <<setw(8)<<left<<get_code()<<setw(21)<<left<<get_destination()<<setw(2)<<a.get_hour()<<":"<<a.get_minutes()<<"\t";
+        if(is_expectvalid())
+            {
+            cout<<expected_time.get_hour()<<":"<<expected_time.get_minutes();
+            }
+        else
+        {
+        cout<<"     ";
+
+        }
+        cout<<"\t  "<<setw(6)<<left<<get_gate()<<setw(10)<<left<<get_check_in() <<get_comment()<<endl;
+    }
+};
+
+
+class Airport{
+    private :
+        string Airport_name;
+        flight *slot[24][60];
+        void initial_flight(){for (int x= 0; x < 24; x++) for (int j = 0; j < 60; j++) slot[x][j] = nullptr;}
+    public :
+        Airport(string n){Airport_name=n;}
+        ~Airport(){delete slot;}
+        void schedule(Localtime b ,flight*p){slot[b.get_hour()][b.get_minutes()]=p;}
+        void comment (Localtime o ,string coment){slot[o.get_hour()][o.get_minutes()]->set_comment(coment);}
+        void Delay (Localtime n,Localtime m){slot[n.get_hour()][n.get_minutes()]->set_expected(m);}
+        void Airport_print(flight_statue arrivalOrDeparture)
+        {
+            if (arrivalOrDeparture==0)
+                {
+                    cout <<"DUSSELDORF AIRPORT ARRIVALS\n===========================\nFlight   From                Scheduled  Expected  Gate  Check-in  Comments\n" ;
+                    Localtime e1(40,12,CET);
+                    slot[e1.get_hour()][e1.get_minutes()]->print(e1);
+                    Localtime e2(50,14,CET);
+                    slot[e2.get_hour()][e2.get_minutes()]->print(e2);
+                    cout<<endl;
+
+                }
+            if(arrivalOrDeparture==1)
+            {
+                cout <<"DUSSELDORF AIRPORT DEPARTURES\n=============================\nFlight   From                Scheduled  Expected  Gate  Check-in  Comments\n" ;
+                Localtime e3(10,9,CET);
+                slot[e3.get_hour()][e3.get_minutes()]->print(e3);
+                Localtime e4(40,10,CET);
+                slot[e4.get_hour()][e4.get_minutes()]->print(e4);
+                Localtime e5(15,11,CET);
+                slot[e5.get_hour()][e5.get_minutes()]->print(e5);
+                Localtime e6(25,13,CET);
+                slot[e6.get_hour()][e6.get_minutes()]->print(e6);
+                Localtime e7(55,14,CET);
+                slot[e7.get_hour()][e7.get_minutes()]->print(e7);
+                cout<<endl;
+
+            }
+        }
+
+};
+
+
+int main()
+{
+    Airport my_airport("Dusseldorf Airport");
+    //Arrivals
+    //#01
+    Localtime time1(40,12,CET);
+    Localtime delay1(5,13,CET);
+    flight first_flight(arrival,"LH 2010","Munich","A04","");
+    my_airport.schedule(time1,&first_flight);
+    my_airport.Delay(time1,delay1);
+    //#02
+    Localtime time2(50,14,CET);
+    flight second_flight(arrival,"EW 9347","Manchester","B04","");
+    my_airport.schedule(time2,&second_flight);
+
+    //Departures
+    //#01
+    Localtime time3(10,9,CET);
+    flight third_flight(departure,"AF 1307","Paris","B51","192-194");
+    third_flight.set_comment("departed");
+    my_airport.schedule(time3,&third_flight);
+
+    //#02
+    Localtime time4(40,10,CET);
+    flight forth_flight(departure,"SU 2537","Moscow","C31","252-255");
+    forth_flight.set_comment("boarding");
+    my_airport.schedule(time4,&forth_flight);
+
+    //#03
+    Localtime time5(15,11,CET);
+    flight Fifth_flight(departure,"EW 9466","London-Heathrow","B35","151-170");
+    my_airport.schedule(time5,&Fifth_flight);
+
+
+    //#04
+    Localtime time6(25,13,CET);
+    flight sixth_flight(departure,"LH 2011","Munich","A40","115-120");
+    sixth_flight.set_comment("Code Sharing");
+    my_airport.schedule(time6,&sixth_flight);
+
+    //#05
+    Localtime time7(55,14,CET);
+    Localtime delay2(20,15,CET);
+    flight seventh_flight(departure,"XQ 959","Izmir","B35","151-170");
+    my_airport.schedule(time7,&seventh_flight);
+    my_airport.Delay(time7,delay2);
+
+
+    my_airport.Airport_print(arrival);
+    my_airport.Airport_print(departure);
+
+    cout<<"flight  "<<first_flight.get_code()<<" deleted"<<endl;
+    cout<<"flight  "<<second_flight.get_code()<<" deleted"<<endl;
+    cout<<"flight  "<<third_flight.get_code()<<" deleted"<<endl;
+    cout<<"flight  "<<forth_flight.get_code()<<" deleted"<<endl;
+    cout<<"flight  "<<Fifth_flight.get_code()<<" deleted"<<endl;
+    cout<<"flight  "<<sixth_flight.get_code()<<" deleted"<<endl;
+    cout<<"flight  "<<seventh_flight.get_code()<<" deleted"<<endl;
+    my_airport.~Airport();
+
+    return 0;
+}
